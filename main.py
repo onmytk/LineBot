@@ -30,6 +30,7 @@ db = SQLAlchemy(app)
 
 class Account(db.Model):
     __tablename__ = 'accounts'
+    id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.Date, nullable=False)
     amount = db.Column(db.Integer, nullable=False)
     type = db.Column(db.String(), nullable=False)
