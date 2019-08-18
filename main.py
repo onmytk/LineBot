@@ -1,5 +1,6 @@
 from flask import Flask, request, abort
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func, desc
 
 from linebot import (
     LineBotApi, WebhookHandler
@@ -12,6 +13,7 @@ from linebot.models import (
 )
 
 import os
+import datetime
 
 
 app = Flask(__name__)
@@ -59,19 +61,62 @@ def callback():
 def handle_message(event):
     line_bot_api.reply_message(
         event.reply_token,
-        TextSendMessage(text = event.message.text)
+        TextSendMessage(text = 'ちょっと待ってね！')
     )
 
-def add_account():
-    pass
+    message = event.message.text.split(' ')
+
+    if message[0] == 'add':
+        add_account(message)
+        push_message(event, '追加しました！')
+    elif message[0] == 'delete':
+        delete_account()
+        push_message(event, '消しました！')
+    else:
+        push_message(event, get_summary())
+
+def add_account(message):
+    account = Account()
+
+    if len(message) == 4:
+        account.date = message[3]
+    else:
+        account.date = datetime.date.today().isoformat()
+    account.amount = int(message[2])
+    account.type = message[1]
+    
+    db.session.add(account)
+    db.session.commit()
 
 def delete_account():
-    pass
+    account = db.session.query(Account).order_by(desc(Account.id)).first()
+    db.session.delete(account)
+    db.session.commit()
 
 def get_summary():
-    pass
+    mes = ''
+    dt = datetime.datetime.today()
+    first_date = dt.date() - datetime.timedelta(days=dt.day - 1)
+
+    # where
+    accounts = db.session.query(Account.type, func.sum(Account.amount)).filter(Account.date >= first_date).group_by(Account.type)
+    for account in accounts:
+        mes += ' '.join(map(str, account)) + '\n'
+
+    accounts = db.session.query(func.sum(Account.amount))
+    for account in accounts:
+        mes += '合計 ' + str(account[0])
+
+    return mes
+
+def push_message(event, message):
+    line_bot_api.push_message(
+            line_bot_api.get_profile(event.source.user_id).user_id,
+            TextSendMessage(text = message)
+        )
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
+    # app.run(host='0.0.0.0', port=port, debug=True)
     app.run(host='0.0.0.0', port=port)
 
