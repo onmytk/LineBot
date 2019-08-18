@@ -59,21 +59,28 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    line_bot_api.reply_message(
-        event.reply_token,
-        TextSendMessage(text = 'ちょっと待ってね！')
-    )
-
+    
     message = event.message.text.split(' ')
 
     if message[0] == 'add':
         add_account(message)
-        push_message(event, '追加しました！')
+        result = '追加しました！'
+        # push_message(event, '追加しました！')
     elif message[0] == 'delete':
         delete_account()
-        push_message(event, '消しました！')
+        result = '消しました！'
+        # push_message(event, '消しました！')
+    elif message[0] == 'summary':
+        result = get_summary()
+        # push_message(event, get_summary())
     else:
-        push_message(event, get_summary())
+        result = 'こんにちは！'
+
+    line_bot_api.reply_message(
+        event.reply_token,
+        TextSendMessage(text = result)
+    )
+
 
 def add_account(message):
     account = Account()
