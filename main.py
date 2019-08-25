@@ -19,12 +19,14 @@ import datetime
 app = Flask(__name__)
 
 # Get enviroment variables
+## Line
 CHANNEL_ACCESS_TOKEN = os.environ['CHANNEL_ACCESS_TOKEN']
 CHANNEL_SECRET = os.environ['CHANNEL_SECRET']
 
 line_bot_api = LineBotApi(CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(CHANNEL_SECRET)
 
+## Database
 db_uri = os.environ['DATABASE_URL']
 app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
 db = SQLAlchemy(app)
@@ -105,14 +107,18 @@ def get_summary():
     dt = datetime.datetime.today()
     first_date = dt.date() - datetime.timedelta(days=dt.day - 1)
 
+    month_total = 0
     # where
     accounts = db.session.query(Account.type, func.sum(Account.amount)).filter(Account.date >= first_date).group_by(Account.type)
     for account in accounts:
-        mes += ' '.join(map(str, account)) + '\n'
+        month_total += account[1]
+        mes += account[0] + ' \\' + '{:,}'.format(str(account[1])) + '\n'
+    mes += '----------\n'
+    mes += '月合計 \\' + '{:,}'.format(str(month_total)) + '\n'
 
     accounts = db.session.query(func.sum(Account.amount))
     for account in accounts:
-        mes += '合計 ' + str(account[0])
+        mes += '合計 \\' + '{:,}'.format(str(account[0]))
 
     return mes
 
