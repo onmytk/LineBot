@@ -112,13 +112,13 @@ def get_summary():
     accounts = db.session.query(Account.type, func.sum(Account.amount)).filter(Account.date >= first_date).group_by(Account.type)
     for account in accounts:
         month_total += account[1]
-        mes += account[0] + ' \\' + '{:,}'.format(str(account[1])) + '\n'
+        mes += account[0] + ' \\' + '{:,d}'.format(account[1]) + '\n'
     mes += '----------\n'
-    mes += '月合計 \\' + '{:,}'.format(str(month_total)) + '\n'
+    mes += '月合計 \\' + '{:,d}'.format(month_total) + '\n'
 
     accounts = db.session.query(func.sum(Account.amount))
     for account in accounts:
-        mes += '合計 \\' + '{:,}'.format(str(account[0]))
+        mes += '合計 \\' + '{:,d}'.format(account[0])
 
     return mes
 
